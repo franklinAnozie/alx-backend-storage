@@ -3,7 +3,35 @@
 
 import redis
 import uuid
-from typing import Union, Callable, Optional
+from typing import Union, Callable, Optional, Any
+from functools import wraps
+
+
+def count_calls(method: Callable) -> Callable:
+    """ counts the number of times Cache methods are called """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs) -> Any:
+        """ wrapper fxn """
+        if isinstance(self, Cache) and isinstance(self._redis, redis.Redis):
+            self._redis.incr(method.__qualname__)
+        return method(self, *args, **kwargs)
+    return wrapper
+
+
+def call_history(method: Callable) -> Callable:
+    """ stores history """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs) -> Any:
+        """ wrapper fxn """
+        inputs = f"{method.__qualname__}:inputs"
+        outputs = f"{method.__qualname__}:outputs"
+        ret_val = method(self, *args, **kwargs)
+
+        if isinstance(self, Cache) and isinstance(self._redis, redis.Redis):
+            self._redis.rpush(inputs, str(args))
+            self._redis.rpush(outputs, ret_val)
+        return ret_val
+    return wrapper
 
 
 class Cache(object):
@@ -13,6 +41,8 @@ class Cache(object):
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @count_calls
+    @call_history
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """ store method """
         rand_key: str = str(uuid.uuid4())
