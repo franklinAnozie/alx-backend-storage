@@ -27,7 +27,7 @@ class Cache(object):
             return fn(retrived_data)
         return retrived_data
 
-    def get_str(self, key: str) -> Union[str | None]:
+    def get_str(self, key: str) -> str:
         """ Returns a string """
         ret_val = self.get(key)
         if ret_val is not None:
