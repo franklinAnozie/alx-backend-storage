@@ -2,3 +2,4 @@ redis.conf
 venv
 redis_*
 wl
+main.py

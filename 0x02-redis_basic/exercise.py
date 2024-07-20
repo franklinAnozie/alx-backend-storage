@@ -3,7 +3,7 @@
 
 import redis
 import uuid
-from typing import Union
+from typing import Union, Callable, Optional
 
 
 class Cache(object):
@@ -18,3 +18,25 @@ class Cache(object):
         rand_key: str = str(uuid.uuid4())
         self._redis.set(rand_key, data)
         return rand_key
+
+    def get(self, key: str,
+            fn: Optional[Callable] = None) -> Union[str, bytes, float, int]:
+        """ Gets Data """
+        retrived_data: bytes = self._redis.get(key)
+        if fn:
+            return fn(retrived_data)
+        return retrived_data
+
+    def get_str(self, key: str) -> Union[str | None]:
+        """ Returns a string """
+        ret_val = self.get(key)
+        if ret_val is not None:
+            return ret_val.decode("utf-8")
+        return None
+
+    def get_int(self, key: int) -> int:
+        """ Returns an int """
+        ret_val = self.get(key)
+        if ret_val is not None:
+            return int(ret_val)
+        return None
