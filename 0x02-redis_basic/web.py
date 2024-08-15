@@ -3,28 +3,27 @@
 
 import redis
 import requests
-from typing import Callable, Any
+from typing import Callable
 from functools import wraps
 
 
 def count_calls(method: Callable) -> Callable:
     """ count calls """
-
     @wraps(method)
     def wrapper(url: str) -> str:
         """ wrapper fxn """
-        clinet = redis.Redis()
+        client = redis.Redis()
 
         count_key = "count:{url}".format(url=url)
         result_key = "result:{url}".format(url=url)
-        clinet.incr(count_key)
+        client.incr(count_key)
 
-        result = clinet.get(result_key)
+        result = client.get(result_key)
         if result:
             return result.decode("utf-8")
 
         return_value = method(url)
-        clinet.setex(result_key, 10, return_value)
+        client.setex(result_key, 10, return_value)
 
         return return_value
     return wrapper
